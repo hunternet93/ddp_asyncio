@@ -20,9 +20,12 @@ class DDPClient:
     def __init__(self, address):
         self.connected = False
         self.address = address
+        self.session = str(random.randint(1, 1000000)))
         
         self.subs = {}
         self.calls = {}
+        
+        self.callcache = []
         
     @asyncio.coroutine
     def connect(self):
@@ -34,7 +37,8 @@ class DDPClient:
             {
                 'msg': 'connect',
                 'version': '1',
-                'support': ['1']
+                'support': ['1'],
+                'session': self.session
             }
         ))
 
@@ -66,14 +70,23 @@ class DDPClient:
         ))
         
     @asyncio.coroutine
+    def call_cached(self, method, params = [], callback = lambda *a: None):
+        if self.connected:
+            yield from self.call(method, params, callback)
+        else:
+            self.callcache.append((method, params, callback))
+        
+    @asyncio.coroutine
     def recvloop(self):
-        while True:
+        while self.websocket.open:
+            while len(self.callcache) > 0:
+                self.call(*self.callcache.pop(0))
+            
             msg = yield from self.websocket.recv()
             msg = ejson.loads(msg)
             print(msg)
             if msg.get('msg') == 'connected':
                 self.connected = True
-                print('woo! connected!')
                 
             elif msg.get('msg') == 'ping':
                 print('pong!')
@@ -101,3 +114,5 @@ class DDPClient:
                 call = self.calls.get(msg['id'])
                 if call:
                     call(msg.get('result'), msg.get('error'))
+                    
+        self.connected = False
