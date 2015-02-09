@@ -3,12 +3,16 @@ import websockets
 import random
 from collections import OrderedDict
 import ejson
+
+@asyncio.coroutine
+def noop(*a): return
         
 class Subscription:
-    def __init__(self, name, added_cb, changed_cb, removed_cb):
+    def __init__(self, name, ready_cb, added_cb, changed_cb, removed_cb):
         self.id = str(random.randint(0, 1000000))
         self.name = name
         self.data = OrderedDict()
+        self.ready_cb = ready_cb
         self.added_cb = added_cb
         self.changed_cb = changed_cb
         self.removed_cb = removed_cb
@@ -20,7 +24,7 @@ class DDPClient:
     def __init__(self, address):
         self.connected = False
         self.address = address
-        self.session = str(random.randint(1, 1000000)))
+        self.session = None
         
         self.subs = {}
         self.calls = {}
@@ -33,21 +37,19 @@ class DDPClient:
         self.websocket = yield from websockets.connect(self.address)
 
         while not self.websocket.open: yield from asyncio.sleep(0.01)
-        yield from self.websocket.send(ejson.dumps(
-            {
-                'msg': 'connect',
-                'version': '1',
-                'support': ['1'],
-                'session': self.session
-            }
-        ))
+        
+        msg = {'msg': 'connect', 'version': '1', 'support': ['1']}
+        if self.session: msg['session'] = self.session
+        yield from self.websocket.send(ejson.dumps(msg))
 
         asyncio.get_event_loop().create_task(self.recvloop())
+        while not self.connected:
+            yield from asyncio.sleep(0.1)
         
     @asyncio.coroutine
-    def subscribe(self, name, params = [], added_cb = lambda *a: None,
-                  changed_cb = lambda *a: None, removed_cb = lambda *a: None):
-        sub = Subscription(name, added_cb, changed_cb, removed_cb)
+    def subscribe(self, name, params = [], ready_cb = noop,
+                  added_cb = noop, changed_cb = noop, removed_cb = noop):
+        sub = Subscription(name, ready_cb, added_cb, changed_cb, removed_cb)
         self.subs[name] = sub
         yield from self.websocket.send(ejson.dumps(
             {'msg': 'sub',
@@ -83,32 +85,43 @@ class DDPClient:
                 self.call(*self.callcache.pop(0))
             
             msg = yield from self.websocket.recv()
+            if not msg: continue
             msg = ejson.loads(msg)
-            print(msg)
+
             if msg.get('msg') == 'connected':
                 self.connected = True
+                self.session = msg['session']
                 
             elif msg.get('msg') == 'ping':
-                print('pong!')
                 yield from self.websocket.send(ejson.dumps({'msg': 'pong', 'id': msg.get('id')}))
-                                        
+                
+            elif msg.get('msg') == 'ready':
+                for sub in self.subs.values():
+                    if sub.id in msg['subs']:
+                        yield from sub.ready_cb(sub)
+
             elif msg.get('msg') == 'added':
                 sub = self.subs.get(msg['collection'])
                 if sub:
                     sub.data[msg['id']] = msg['fields']
-                    sub.added_cb(sub, msg['id'], msg['fields'])
+                    yield from sub.added_cb(sub, msg['id'], msg['fields'])
                     
             elif msg.get('msg') == 'changed':
                 sub = self.subs.get(msg['collection'])
                 if sub:
-                    sub.data[msg['id']] = msg['field']
-                    sub.changed_cb(sub, msg['id'], msg['fields'])
+                    if msg.get('field'):
+                        sub.data[msg['id']] = msg['field']
+                        yield from sub.changed_cb(sub, msg['id'], msg['field'])
+                    elif msg.get('cleared'):
+                        for key in msg['cleared']
+                            del sub.data[key]
+                        yield from sub.changed_cb(sub, msg['id'], msg['cleared'])
                     
             elif msg.get('msg') == 'removed':
                 sub = self.subs.get(msg['collection'])
                 if sub:
                     del sub.data[msg['id']]
-                    sub.removed_cb(sub, msg['id'])
+                    yield from sub.removed_cb(sub, msg['id'])
                     
             elif msg.get('msg') == 'result':
                 call = self.calls.get(msg['id'])
@@ -116,3 +129,11 @@ class DDPClient:
                     call(msg.get('result'), msg.get('error'))
                     
         self.connected = False
+        while True:
+            self.websocket = yield from websockets.connect(self.address)
+            if self.websocket.open:
+                yield from self.connect()
+                return
+            else:
+                yield from asyncio.sleep(1)
+
