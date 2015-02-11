@@ -109,11 +109,11 @@ class DDPClient:
             elif msg.get('msg') == 'changed':
                 sub = self.subs.get(msg['collection'])
                 if sub:
-                    if msg.get('field'):
-                        sub.data[msg['id']] = msg['field']
-                        yield from sub.changed_cb(sub, msg['id'], msg['field'])
+                    if msg.get('fields'):
+                        sub.data[msg['id']].update(msg['fields'])
+                        yield from sub.changed_cb(sub, msg['id'], msg['fields'])
                     elif msg.get('cleared'):
-                        for key in msg['cleared']
+                        for key in msg['cleared']:
                             del sub.data[key]
                         yield from sub.changed_cb(sub, msg['id'], msg['cleared'])
                     
