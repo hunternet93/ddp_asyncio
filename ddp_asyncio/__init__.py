@@ -1,1 +1,1 @@
-from .ddp_asyncio import Subscription, DDPClient
+from .ddp_asyncio import Subscription, MethodCall, DDPClient

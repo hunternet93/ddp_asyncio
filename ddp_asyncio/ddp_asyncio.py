@@ -19,6 +19,22 @@ class Subscription:
         
     def sorted(self, key):
         return OrderedDict(sorted(self.data.items(), key=lambda d: d[1][key]))
+        
+class MethodCall:
+    def __init__(self, method, *args, callback = None):
+        self.id = str(random.randint(1, 1000000))
+        self.method = method
+        self.args = args
+        self.callback = callback
+        self.finished = False
+        self.result, self.error = None, None
+
+    @asyncio.coroutine        
+    def onfinished(self, result, error):
+        self.finished = True
+        self.result, self.error = result, error
+        if self.callback:
+            yield from self.callback(result, error)
                 
 class DDPClient:
     def __init__(self, address):
@@ -61,15 +77,22 @@ class DDPClient:
         return sub
 
     @asyncio.coroutine        
-    def call(self, method, params = [], callback = lambda *a: None):
-        id = str(random.randint(1, 1000000))
-        self.calls[id] = callback
+    def call(self, method, *args, callback = None, wait = True):
+        c = MethodCall(method, *args, callback = callback)
+        self.calls[c.id] = c
+
         yield from self.websocket.send(ejson.dumps(
             {'msg': 'method',
              'method': method,
-             'params': params,
-             'id': id}
+             'params': args,
+             'id': c.id}
         ))
+        
+        if wait:
+            while not c.finished:
+                yield from asyncio.sleep(0.1)
+                
+            return c.result, c.error
         
     @asyncio.coroutine
     def call_cached(self, method, params = [], callback = lambda *a: None):
@@ -124,9 +147,9 @@ class DDPClient:
                     yield from sub.removed_cb(sub, msg['id'])
                     
             elif msg.get('msg') == 'result':
-                call = self.calls.get(msg['id'])
-                if call:
-                    call(msg.get('result'), msg.get('error'))
+                c = self.calls.get(msg['id'])
+                if c:
+                    yield from c.onfinished(msg.get('result'), msg.get('error'))
                     
         self.connected = False
         while True:
