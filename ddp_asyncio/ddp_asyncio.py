@@ -21,10 +21,8 @@ class Subscription:
         return OrderedDict(sorted(self.data.items(), key=lambda d: d[1][key]))
         
 class MethodCall:
-    def __init__(self, method, *args, callback = None):
+    def __init__(self, callback):
         self.id = str(random.randint(1, 1000000))
-        self.method = method
-        self.args = args
         self.callback = callback
         self.finished = False
         self.result, self.error = None, None
@@ -63,7 +61,7 @@ class DDPClient:
             yield from asyncio.sleep(0.1)
         
     @asyncio.coroutine
-    def subscribe(self, name, params = [], ready_cb = noop,
+    def subscribe(self, name, *params, ready_cb = noop,
                   added_cb = noop, changed_cb = noop, removed_cb = noop):
         sub = Subscription(name, ready_cb, added_cb, changed_cb, removed_cb)
         self.subs[name] = sub
@@ -77,14 +75,14 @@ class DDPClient:
         return sub
 
     @asyncio.coroutine        
-    def call(self, method, *args, callback = None, wait = True):
-        c = MethodCall(method, *args, callback = callback)
+    def call(self, method, *params, callback = None, wait = True):
+        c = MethodCall(callback)
         self.calls[c.id] = c
 
         yield from self.websocket.send(ejson.dumps(
             {'msg': 'method',
              'method': method,
-             'params': args,
+             'params': params,
              'id': c.id}
         ))
         
