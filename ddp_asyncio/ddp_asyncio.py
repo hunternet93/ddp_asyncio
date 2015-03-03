@@ -47,7 +47,6 @@ class DDPClient:
         
     @asyncio.coroutine
     def connect(self):
-        print('opening socket')
         self.websocket = yield from websockets.connect(self.address)
 
         while not self.websocket.open: yield from asyncio.sleep(0.01)
