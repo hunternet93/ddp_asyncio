@@ -6,6 +6,9 @@ import ejson
 
 @asyncio.coroutine
 def noop(*a): return
+
+class RemoteMethodError(Exception):
+    pass
         
 class Subscription:
     def __init__(self, name, ready_cb, added_cb, changed_cb, removed_cb):
@@ -31,8 +34,12 @@ class MethodCall:
     def onfinished(self, result, error):
         self.finished = True
         self.result, self.error = result, error
+
+        if error:
+            raise RemoteMethodError(error['error'])
+
         if self.callback:
-            yield from self.callback(result, error)
+            yield from self.callback(result)
                 
 class DDPClient:
     def __init__(self, address):
@@ -89,7 +96,7 @@ class DDPClient:
             while not c.finished:
                 yield from asyncio.sleep(0.1)
                 
-            return c.result, c.error
+            return c.result
         
     @asyncio.coroutine
     def call_cached(self, method, params = [], callback = lambda *a: None):
