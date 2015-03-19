@@ -55,7 +55,7 @@ class DDPClient:
         if self.session: msg['session'] = self.session
         yield from self.websocket.send(ejson.dumps(msg))
 
-        asyncio.get_event_loop().create_task(self.recvloop())
+        asyncio.async(self.recvloop())
         while not self.connected:
             yield from asyncio.sleep(0.1)
         
