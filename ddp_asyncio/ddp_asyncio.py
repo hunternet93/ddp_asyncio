@@ -54,9 +54,14 @@ class DDPClient:
         
     @asyncio.coroutine
     def connect(self):
-        self.websocket = yield from websockets.connect(self.address)
-
-        while not self.websocket.open: yield from asyncio.sleep(0.01)
+        c = False
+        while not c:
+            try:
+                self.websocket = yield from websockets.connect(self.address)
+                c = self.websocket.open
+                print(c)
+            except ConnectionRefusedError:
+                yield from asyncio.sleep(1)
         
         msg = {'msg': 'connect', 'version': '1', 'support': ['1']}
         if self.session: msg['session'] = self.session
@@ -157,10 +162,6 @@ class DDPClient:
                     
         self.connected = False
         while True:
-            self.websocket = yield from websockets.connect(self.address)
-            if self.websocket.open:
-                yield from self.connect()
-                return
-            else:
-                yield from asyncio.sleep(1)
+            yield from self.connect()
+            return
 
