@@ -1,11 +1,16 @@
 from setuptools import setup, find_packages
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 setup(
     name='ddp_asyncio',
-    version='0.0.1',
+    version='0.1.0',
     description='Asynchronous DDP library',
-    long_description='A library for interfacing with servers using the DDP protocol (such as Meteor) asynchronously using the asyncio library.',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/hunternet93/ddp_asyncio',
+    download_url='https://github.com/hunternet93/ddp_asyncio/archive/ddp_asyncio-0.1.0.tar.gz',
 
     author='Isaac Smith',
     author_email='isaac@isrv.pw',
@@ -13,20 +18,22 @@ setup(
     license='MIT',
 
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
 
         'Intended Audience :: Developers',
 
         'License :: OSI Approved :: MIT License',
+        
+        'Operating System :: OS Independent',
 
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        
+        'Framework :: AsyncIO'
     ],
 
     keywords='ddp meteor',
-
     packages=find_packages(),
     install_requires=['websockets', 'ejson'],
 )
