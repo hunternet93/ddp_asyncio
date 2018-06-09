@@ -16,6 +16,6 @@ Install using the included setup.py script:
 
 Check out the following examples, all of which use Meteor's reference [Todos](https://github.com/meteor/todos) application.
 
-    * [Retrieve todo list](example_retrieve_todos.py)
-    * [Create a todo list](example_create_todos.py)
-    * [Watch todo lists for changes](example_watch_todos.py)
+* [Retrieve todo list](example_retrieve_todos.py)
+* [Create a todo list](example_create_todos.py)
+* [Watch todo lists for changes](example_watch_todos.py)
