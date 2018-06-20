@@ -1,6 +1,9 @@
 class ConnectionError(Exception):
     pass
 
+class NotConnectedError(Exception):
+    pass
+
 class RemoteMethodError(Exception):
     pass
 

@@ -52,23 +52,36 @@ class TodoWatcher:
                 print('Task deleted: "{}"'.format(event._id))
 
     async def go(self, loop):
-        await self.client.connect()
+        print('Connecting to server...')
         
-        lists = self.client.get_collection('lists')
-        lists_q = lists.get_queue()
-        loop.create_task(self.watch_lists(lists, lists_q))
-        
-        todos = self.client.get_collection('todos')
-        todos_q = todos.get_queue()
-        loop.create_task(self.watch_todos(todos, todos_q))
-        
-        sub = await self.client.subscribe('lists.public')
-        await sub.wait()
-
+        while True:
+            try:
+                session = await self.client.connect()
+            except ConnectionRefusedError or ConnectionResetError:
+                await asyncio.sleep(1)
+                continue
+            
+            print('Connected to server.')
+            
+            lists = self.client.get_collection('lists')
+            lists_q = lists.get_queue()
+            lists_task = loop.create_task(self.watch_lists(lists, lists_q))
+            
+            todos = self.client.get_collection('todos')
+            todos_q = todos.get_queue()
+            todos_task = loop.create_task(self.watch_todos(todos, todos_q))
+            
+            sub = await self.client.subscribe('lists.public')
+            await sub.wait()
+            
+            await self.client.disconnection()
+            print('Lost connection to server, attempting to reestablish...')
+            
+            lists_task.cancel()
+            todos_task.cancel()
 
 loop = asyncio.get_event_loop()
 
 td = TodoWatcher(sys.argv[1])
 
 loop.run_until_complete(td.go(loop))
-loop.run_forever()

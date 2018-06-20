@@ -9,40 +9,38 @@ DDPClient(self, url, event_loop=None)
 Manages a connection to a server.
 It takes a URL as the first parameter, the optional second parameter specifies which event loop will be used.
 
+The is_connected property is a boolean which can be used to determine if DDPClient is currently connected to a server.
+
 <h2 id="ddp_asyncio.ddpclient.DDPClient.connect">connect</h2>
 
 ```python
 DDPClient.connect(self)
 ```
-This coroutine establishes a connection to a server. It blocks until the connection is established or an exception is raised.
-<h2 id="ddp_asyncio.ddpclient.DDPClient.subscribe">subscribe</h2>
+This coroutine establishes a connection to a server.
+It blocks until the connection is established or an exception is raised.
+
+Raises ddp_asyncio.ConnectionError if the server reports a failure (usually caused by incomplatible versions of the DDP protocol.)
+
+<h2 id="ddp_asyncio.ddpclient.DDPClient.disconnect">disconnect</h2>
 
 ```python
-DDPClient.subscribe(self, name, *params)
+DDPClient.disconnect(self)
 ```
-Subscribe to a publication.
-subscribe() returns a Subscription object which can be used to monitor the status of the subscription.
+Coroutine which disconnects from the server.
+Does nothing if called while not connected.
 
-<h2 id="ddp_asyncio.ddpclient.DDPClient.unsubscribe">unsubscribe</h2>
+<h2 id="ddp_asyncio.ddpclient.DDPClient.disconnection">disconnection</h2>
 
 ```python
-DDPClient.unsubscribe(self, sub)
+DDPClient.disconnection(self)
 ```
-Unsubscribe from a publication.
+Coroutine that blocks while connected to the server.
 <h2 id="ddp_asyncio.ddpclient.DDPClient.get_collection">get_collection</h2>
 
 ```python
 DDPClient.get_collection(self, name)
 ```
 Retrieve an existing Collection by name. If the Collection does not exist it will be created.
-<h2 id="ddp_asyncio.ddpclient.DDPClient.call">call</h2>
-
-```python
-DDPClient.call(self, method, *params)
-```
-This coroutine calls a remote method on the server and returns the result.
-Raises a ddp_asyncio.RemoteMethodError if the server replies with an error.
-
 <h1 id="ddp_asyncio.subscription.Subscription">Subscription</h1>
 
 ```python
