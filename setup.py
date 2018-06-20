@@ -5,12 +5,12 @@ with open("README.md", "r") as fh:
 
 setup(
     name='ddp_asyncio',
-    version='0.1.0',
+    version='0.2.0',
     description='Asynchronous DDP library',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/hunternet93/ddp_asyncio',
-    download_url='https://github.com/hunternet93/ddp_asyncio/archive/ddp_asyncio-0.1.0.tar.gz',
+    download_url='https://github.com/hunternet93/ddp_asyncio/releases/download/0.2.0/ddp_asyncio-0.2.0.tar.gz',
 
     author='Isaac Smith',
     author_email='isaac@isrv.pw',
