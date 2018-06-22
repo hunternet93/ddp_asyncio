@@ -21,3 +21,10 @@ Check out the following examples, all of which use Meteor's reference [Todos](ht
 * [Retrieve todo list](https://github.com/hunternet93/ddp_asyncio/blob/master/example_retrieve_todos.py)
 * [Create a todo list](https://github.com/hunternet93/ddp_asyncio/blob/master/example_create_todos.py)
 * [Watch todo lists for changes](https://github.com/hunternet93/ddp_asyncio/blob/master/example_watch_todos.py)
+
+### Extras
+
+#### Meteor-Files Upload
+ddp_asyncio's `MeteorFilesUploader` can upload files to a server using the [Meteor-Files](https://github.com/VeliovGroup/Meteor-Files) package.
+
+[Example](https://github.com/hunternet93/ddp_asyncio/blob/master/example_upload_file.py)

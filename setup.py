@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='ddp_asyncio',
-    version='0.2.0',
+    version='0.3.0',
     description='Asynchronous DDP library',
     long_description=long_description,
     long_description_content_type='text/markdown',
